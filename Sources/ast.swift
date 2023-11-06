@@ -29,4 +29,13 @@ struct Binary: Expr {
     let token: Token
 }
 
+struct Literal<T>: Expr {
+    let val: T
+}
+
+struct Assign: Expr {
+    let right: Expr
+    let name: String
+}
+
 protocol Stmt {}

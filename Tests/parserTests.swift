@@ -10,6 +10,7 @@ import XCTest
 
 final class parserTests: XCTestCase {
     
+    //MARK: Expr Tests
     func parseExpr(source: String) throws -> Expr? {
         let l = Lexer(source: source)
         let tokens = try l.tokens()
@@ -86,5 +87,44 @@ final class parserTests: XCTestCase {
         
         XCTAssertEqual(left.name, "x")
         XCTAssertEqual(right.name, "y")
+    }
+    
+    func testLiterals() throws {
+        let sources = [
+            "\"string\"",
+            "10",
+            "10.5",
+        ]
+        
+        let exp: [Any] = [
+            Literal(val: "string"),
+            Literal(val: 10),
+            Literal(val: 10.5)
+        ]
+        
+        for (i, e) in exp.enumerated() {
+            let s = sources[i]
+            if let expr = try parseExpr(source: s) as? Literal<String> {
+                let e = e as! Literal<String>
+                XCTAssertEqual(expr.val, e.val)
+            } else if let expr = try parseExpr(source: s) as? Literal<Int> {
+                let e = e as! Literal<Int>
+                XCTAssertEqual(expr.val, e.val)
+            } else if let expr = try parseExpr(source: s) as? Literal<Double> {
+                let e = e as! Literal<Double>
+                XCTAssertEqual(expr.val, e.val)
+            }
+        }
+    }
+    
+    func testAssignment() throws {
+        let source = """
+        x = "string"
+        """
+        
+        let expr = try parseExpr(source: source) as! Assign
+        XCTAssertEqual(expr.name, "x")
+        let right = expr.right as! Literal<String>
+        XCTAssertEqual(right.val, "string")
     }
 }

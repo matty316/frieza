@@ -16,9 +16,14 @@ protocol InfixParselet {
     var precedence: Parser.Precedence { get }
 }
 
+//MARK: Prefix
 struct NameParselet: PrefixParslet {
     func parse(parser: Parser, token: Token) throws -> Expr {
-        Name(token: token, name: token.text)
+        switch token {
+        case .Ident(let s, _): return Name(token: token, name: s)
+        default: throw ParseError(message: "expected a name")
+        }
+        
     }
 }
 
@@ -41,6 +46,18 @@ struct GroupingParselet: PrefixParslet {
     }
 }
 
+struct LiteralParselet: PrefixParslet {
+    func parse(parser: Parser, token: Token) throws -> Expr {
+        switch token {
+        case .String(let s, _): return Literal(val: s)
+        case .Int(let i, _): return Literal(val: i)
+        case .Float(let f, _): return Literal(val: f)
+        default: throw ParseError(message: "cannot parse literal")
+        }
+    }
+}
+
+//MARK: Infix
 struct BinaryParselet: InfixParselet {
     let precedence: Parser.Precedence
     
@@ -49,3 +66,15 @@ struct BinaryParselet: InfixParselet {
         return Binary(left: left, right: right, token: token)
     }
 }
+
+struct AssignParselet: InfixParselet {
+    let precedence: Parser.Precedence
+    
+    func parse(parser: Parser, left: Expr, token: Token) throws -> Expr {
+        guard let left = left as? Name else { throw ParseError(message: "left operand must be name") }
+        
+        let right = try parser.parseExpression(precedence: Parser.Precedence.Assignment.rawValue  - 1)
+        return Assign(right: right, name: left.name)
+    }
+}
+

@@ -14,10 +14,6 @@ class Parser {
         guard current < tokens.count else { return .Eof }
         return tokens[current]
     }
-    private var peek: Token {
-        guard current + 1 < tokens.count else { return .Eof }
-        return tokens[current + 1]
-    }
     
     init(tokens: [Token]) {
         self.tokens = tokens
@@ -32,6 +28,7 @@ class Parser {
         case .Ident(_, _): prefixParselet = NameParselet()
         case .Minus(_): prefixParselet = UnaryParselet()
         case .LParen(_): prefixParselet = GroupingParselet()
+        case .String(_, _), .Int(_, _), .Float(_, _): prefixParselet = LiteralParselet()
         default: break
         }
                 
@@ -48,6 +45,7 @@ class Parser {
             switch token {
             case .Plus(_), .Minus(_): infixParselet = BinaryParselet(precedence: .Sum)
             case .Slash(_), .Star(_): infixParselet = BinaryParselet(precedence: .Product)
+            case .Eq(_): infixParselet = AssignParselet(precedence: .Assignment)
             default: break
             }
             if let infixParselet = infixParselet {
@@ -87,6 +85,7 @@ extension Parser {
         switch token {
         case .Minus(_), .Plus(_): return .Sum
         case .Slash(_), .Star(_): return .Product
+        case .Eq(_): return .Assignment
         default: return .None
         }
     }
