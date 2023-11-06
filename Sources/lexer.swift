@@ -12,11 +12,11 @@ struct ParseError: Error {
 }
 
 class Lexer {
-    var current: String.Index
-    var start: String.Index
-    var source: String
-    var line: Int
-    var isAtEnd: Bool {
+    private var current: String.Index
+    private var start: String.Index
+    private var source: String
+    private var line: Int
+    private var isAtEnd: Bool {
         current == source.endIndex
     }
     
@@ -27,6 +27,14 @@ class Lexer {
         self.line = 1
     }
     
+    func tokens() throws -> [Token] {
+        var tokens = [Token]()
+        while !isAtEnd {
+            tokens.append(try nextToken())
+        }
+        return tokens
+    }
+    
     func nextToken() throws -> Token {
         skipWhitespace()
         start = current
@@ -34,7 +42,6 @@ class Lexer {
         
         if isAlpha(c) { return ident() }
         if isDigit(c) { return try num() }
-        if isAtEnd { return .Eof }
                 
         switch c {
         case "(": return .LParen(line)
@@ -78,8 +85,11 @@ class Lexer {
         case "\n":
             line += 1
             return .NewLine(line)
-        default: return .Illegal(line)
+        default: break
         }
+        
+        if isAtEnd { return .Eof }
+        return .Illegal(line)
     }
 }
 

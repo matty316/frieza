@@ -15,9 +15,10 @@ enum Token: Equatable {
     case Eq(Int), EqEq(Int), Plus(Int), Minus(Int), Slash(Int), Star(Int), Bang(Int), BangEq(Int), Lt(Int), LtEq(Int), Gt(Int), GtEq(Int) //Operators
     case NewLine(Int)
     
-    func getText() -> String {
+    var text: String {
         switch self {
         case .Ident(let s, _): return s
+        case .String(let s, _): return s
         default: return ""
         }
     }

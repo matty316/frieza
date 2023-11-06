@@ -7,9 +7,7 @@
 
 import Foundation
 
-protocol Expr {
-    
-}
+protocol Expr {}
 
 struct Name: Expr {
     let token: Token
@@ -18,7 +16,17 @@ struct Name: Expr {
 
 struct Unary: Expr {
     let token: Token
-    let right: Expr?
+    let right: Expr
+}
+
+struct Grouping: Expr {
+    let expr: Expr
+}
+
+struct Binary: Expr {
+    let left: Expr
+    let right: Expr
+    let token: Token
 }
 
 protocol Stmt {}
