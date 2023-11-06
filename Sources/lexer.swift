@@ -84,7 +84,7 @@ class Lexer {
 }
 
 //MARK: Helpers
-extension Lexer {
+private extension Lexer {
     
     func skipWhitespace() {
         while true {
