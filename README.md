@@ -1,4 +1,4 @@
-# freeza programming language - not for filthy saiyan monkeys
+# frieza programming language - not for filthy saiyan monkeys
 
 ```
 let goku = "monkey"
