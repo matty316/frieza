@@ -8,10 +8,10 @@
 import Foundation
 
 enum Token: Equatable {
-    case Illegal(Int), Eof //Sentenal
-    case LParen(Int), RParen(Int), Colon(Int), Comma(Int), Semicolon(Int) //Punctuation
-    case Let(Int), If(Int), Else(Int), Fun(Int), For(Int), Return(Int), End(Int), True(Int), False(Int), Nil(Int), Print(Int), In(Int) //Keywords
-    case Ident(String, Int), Int(Int, Int), Float(Double, Int), String(String, Int) //Values
-    case Eq(Int), EqEq(Int), Plus(Int), Minus(Int), Slash(Int), Star(Int), Bang(Int), BangEq(Int), Lt(Int), LtEq(Int), Gt(Int), GtEq(Int) //Operators
-    case NewLine(Int)
+    case Illegal, Eof //Sentenal
+    case LParen, RParen, Colon, Comma, Semicolon //Punctuation
+    case Let, If, Else, Fun, For, Return, End, True, False, Nil, Print, In //Keywords
+    case Ident(String), Int(Int), Float(Double), String(String) //Values
+    case Eq, EqEq, Plus, Minus, Slash, Star, Bang, BangEq, Lt, LtEq, Gt, GtEq //Operators
+    case NewLine
 }

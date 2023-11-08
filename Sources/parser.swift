@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  parser.swift
 //  
 //
 //  Created by matty on 11/6/23.
@@ -7,17 +7,51 @@
 
 import Foundation
 
+struct ParseError: Error {
+    let message: String
+}
+
+typealias Program = [Stmt]
+
 class Parser {
     private let tokens: [Token]
     private var current: Int
+    private var line: Int
     private var currentToken: Token {
         guard current < tokens.count else { return .Eof }
         return tokens[current]
+    }
+    private var isAtEnd: Bool {
+        current >= tokens.count
     }
     
     init(tokens: [Token]) {
         self.tokens = tokens
         self.current = 0
+        self.line = 1
+    }
+    
+    func parse() throws -> Program {
+        var program = Program()
+        while !isAtEnd {
+            program.append(try parseExpessionStmt())
+        }
+        return program
+    }
+    
+    func parseExpessionStmt() throws -> Stmt {
+        let expr = try parseExpression()
+        switch currentToken {
+        case .NewLine: 
+            line += 1
+            try consume()
+        case .Semicolon, .Eof: 
+            try consume()
+        default: 
+            throw ParseError(message: "expected a ';' at line \(line)")
+        }
+        
+        return ExpressionStmt(expr: expr)
     }
     
     func parseExpression(precedence: Int = 0) throws -> Expr {
@@ -25,10 +59,10 @@ class Parser {
         
         var prefixParselet: PrefixParslet? = nil
         switch token {
-        case .Ident(_, _): prefixParselet = NameParselet()
-        case .Minus(_): prefixParselet = UnaryParselet()
-        case .LParen(_): prefixParselet = GroupingParselet()
-        case .String(_, _), .Int(_, _), .Float(_, _): prefixParselet = LiteralParselet()
+        case .Ident(_): prefixParselet = NameParselet()
+        case .Minus: prefixParselet = UnaryParselet()
+        case .LParen: prefixParselet = GroupingParselet()
+        case .String(_), .Int(_), .Float(_): prefixParselet = LiteralParselet()
         default: break
         }
                 
@@ -43,9 +77,9 @@ class Parser {
             var infixParselet: InfixParselet? = nil
             
             switch token {
-            case .Plus(_), .Minus(_): infixParselet = BinaryParselet(precedence: .Sum)
-            case .Slash(_), .Star(_): infixParselet = BinaryParselet(precedence: .Product)
-            case .Eq(_): infixParselet = AssignParselet(precedence: .Assignment)
+            case .Plus, .Minus: infixParselet = BinaryParselet(precedence: .Sum)
+            case .Slash, .Star: infixParselet = BinaryParselet(precedence: .Product)
+            case .Eq: infixParselet = AssignParselet(precedence: .Assignment)
             default: break
             }
             if let infixParselet = infixParselet {
@@ -83,9 +117,9 @@ extension Parser {
     
     func getPrecedence(token: Token) -> Precedence {
         switch token {
-        case .Minus(_), .Plus(_): return .Sum
-        case .Slash(_), .Star(_): return .Product
-        case .Eq(_): return .Assignment
+        case .Minus, .Plus: return .Sum
+        case .Slash, .Star: return .Product
+        case .Eq: return .Assignment
         default: return .None
         }
     }

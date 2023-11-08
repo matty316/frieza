@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ParseError: Error {
+struct LexerError: Error {
     let message: String
 }
 
@@ -27,7 +27,7 @@ class Lexer {
         self.line = 1
     }
     
-    func tokens() throws -> [Token] {
+    func scan() throws -> [Token] {
         var tokens = [Token]()
         while !isAtEnd {
             tokens.append(try nextToken())
@@ -44,52 +44,52 @@ class Lexer {
         if isDigit(c) { return try num() }
                 
         switch c {
-        case "(": return .LParen(line)
-        case ")": return .RParen(line)
-        case ";": return .Semicolon(line)
-        case ":": return .Colon(line)
-        case ",": return .Comma(line)
-        case "+": return .Plus(line)
-        case "-": return .Minus(line)
-        case "/": return .Slash(line)
-        case "*": return .Star(line)
+        case "(": return .LParen
+        case ")": return .RParen
+        case ";": return .Semicolon
+        case ":": return .Colon
+        case ",": return .Comma
+        case "+": return .Plus
+        case "-": return .Minus
+        case "/": return .Slash
+        case "*": return .Star
         case "=":
             if peek() == "=" {
                 advance()
-                return .EqEq(line)
+                return .EqEq
             } else {
-                return .Eq(line)
+                return .Eq
             }
         case "!":
             if peek() == "=" {
                 advance()
-                return .BangEq(line)
+                return .BangEq
             } else {
-                return .Bang(line)
+                return .Bang
             }
         case "<":
             if peek() == "=" {
                 advance()
-                return .LtEq(line)
+                return .LtEq
             } else {
-                return .Lt(line)
+                return .Lt
             }
         case ">":
             if peek() == "=" {
                 advance()
-                return .GtEq(line)
+                return .GtEq
             } else {
-                return .Gt(line)
+                return .Gt
             }
-        case "\"": return string()
+        case "\"": return try string()
         case "\n":
             line += 1
-            return .NewLine(line)
+            return .NewLine
         default: break
         }
         
         if isAtEnd { return .Eof }
-        return .Illegal(line)
+        throw LexerError(message: "Illegal Token at line \(line)")
     }
 }
 
@@ -148,46 +148,46 @@ private extension Lexer {
     func lookupKeyword() -> Token {
         let c = source[start]
         switch c {
-        case "l": return checkKeyword(rest: "et", begin: 1, len: 2, token: .Let(line))
-        case "r": return checkKeyword(rest: "eturn", begin: 1, len: 5, token: .Return(line))
+        case "l": return checkKeyword(rest: "et", begin: 1, len: 2, token: .Let)
+        case "r": return checkKeyword(rest: "eturn", begin: 1, len: 5, token: .Return)
         case "e": 
             if source[start..<current].count > 1 {
                 switch source[source.index(after: start)] {
-                case "n": return checkKeyword(rest: "d", begin: 2, len: 1, token: .End(line))
-                case "l": return checkKeyword(rest: "se", begin: 2, len: 2, token: .Else(line))
+                case "n": return checkKeyword(rest: "d", begin: 2, len: 1, token: .End)
+                case "l": return checkKeyword(rest: "se", begin: 2, len: 2, token: .Else)
                 default: break
                 }
             }
         case "i":
             if source[start..<current].count == 2 {
                 switch source[source.index(after: start)] {
-                case "f": return .If(line)
-                case "n": return .In(line)
+                case "f": return .If
+                case "n": return .In
                 default: break
                 }
             }
-        case "t": return checkKeyword(rest: "rue", begin: 1, len: 3, token: .True(line))
-        case "n": return checkKeyword(rest: "il", begin: 1, len: 2, token: .Nil(line))
-        case "p": return checkKeyword(rest: "rint", begin: 1, len: 4, token: .Print(line))
+        case "t": return checkKeyword(rest: "rue", begin: 1, len: 3, token: .True)
+        case "n": return checkKeyword(rest: "il", begin: 1, len: 2, token: .Nil)
+        case "p": return checkKeyword(rest: "rint", begin: 1, len: 4, token: .Print)
         case "f":
             if source[start..<current].count > 1 {
                 switch source[source.index(after: start)] {
-                case "u": return checkKeyword(rest: "n", begin: 2, len: 1, token: .Fun(line))
-                case "o": return checkKeyword(rest: "r", begin: 2, len: 1, token: .For(line))
-                case "a": return checkKeyword(rest: "lse", begin: 2, len: 3, token: .False(line))
+                case "u": return checkKeyword(rest: "n", begin: 2, len: 1, token: .Fun)
+                case "o": return checkKeyword(rest: "r", begin: 2, len: 1, token: .For)
+                case "a": return checkKeyword(rest: "lse", begin: 2, len: 3, token: .False)
                 default: break
                 }
             }
         default: break
         }
-        return .Ident(String(source[start..<current]), line)
+        return .Ident(String(source[start..<current]))
     }
     
     func checkKeyword(rest: String, begin: Int, len: Int, token: Token) -> Token {
         if source[start..<current].count == begin + len && String(source[source.index(start, offsetBy: begin)..<current]) == rest {
             return token
         }
-        return .Ident(String(source[start..<current]), line)
+        return .Ident(String(source[start..<current]))
     }
     
     func num() throws -> Token {
@@ -196,29 +196,35 @@ private extension Lexer {
         if peek() == "." && isDigit(peekNext()) {
             advance()
             while isDigit(peek()) { advance() }
+            if isAlpha(peek()) { throw LexerError(message: "invalid number at line \(line)")}
             let string = String(source[start..<current])
             guard let num = Double(string) else {
-                throw ParseError(message: "cannot parse float")
+                throw LexerError(message: "invalid value. expected Double at line \(line)")
             }
-            return .Float(num, line)
+            return .Float(num)
         } else {
+            if isAlpha(peek()) { throw LexerError(message: "invalid number at line \(line)")}
+
             let string = String(source[start..<current])
             guard let num = Int(string) else {
-                throw ParseError(message: "cannot parse int")
+                throw LexerError(message: "invalid value. expected Int at line \(line)")
             }
-            return .Int(num, line)
+            return .Int(num)
         }
     }
     
-    func string() -> Token {
+    func string() throws -> Token {
         while peek() != "\"" && !isAtEnd {
             advance()
             if peek() == "\n" { line += 1 }
         }
         
+        if isAtEnd {
+            throw LexerError(message: "Unterminated string")
+        }
         advance()
         
         let string = String(source[source.index(after: start)..<source.index(before: current)])
-        return .String(string, line)
+        return .String(string)
     }
 }

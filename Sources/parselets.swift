@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  parselet.swift
 //  
 //
 //  Created by matty on 11/6/23.
@@ -20,7 +20,7 @@ protocol InfixParselet {
 struct NameParselet: PrefixParslet {
     func parse(parser: Parser, token: Token) throws -> Expr {
         switch token {
-        case .Ident(let s, _): return Name(token: token, name: s)
+        case .Ident(let s): return Name(token: token, name: s)
         default: throw ParseError(message: "expected a name")
         }
         
@@ -38,7 +38,7 @@ struct GroupingParselet: PrefixParslet {
         let expr = try parser.parseExpression()
         let next = try parser.consume()
         switch next {
-        case .RParen(_): return Grouping(expr: expr)
+        case .RParen: return Grouping(expr: expr)
         case .Eof: throw ParseError(message: "unterminated grouping")
         default: throw ParseError(message: "expected a ')'")
         }
@@ -49,9 +49,9 @@ struct GroupingParselet: PrefixParslet {
 struct LiteralParselet: PrefixParslet {
     func parse(parser: Parser, token: Token) throws -> Expr {
         switch token {
-        case .String(let s, _): return Literal(val: s)
-        case .Int(let i, _): return Literal(val: i)
-        case .Float(let f, _): return Literal(val: f)
+        case .String(let s): return Literal(val: s)
+        case .Int(let i): return Literal(val: i)
+        case .Float(let f): return Literal(val: f)
         default: throw ParseError(message: "cannot parse literal")
         }
     }

@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  ast.swift
 //  
 //
 //  Created by matty on 11/6/23.
@@ -7,6 +7,7 @@
 
 import Foundation
 
+//MARK: Expr
 protocol Expr {}
 
 struct Name: Expr {
@@ -38,4 +39,9 @@ struct Assign: Expr {
     let name: String
 }
 
+//MARK: Stmt
 protocol Stmt {}
+
+struct ExpressionStmt: Stmt {
+    let expr: Expr
+}

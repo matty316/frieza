@@ -13,7 +13,7 @@ final class parserTests: XCTestCase {
     //MARK: Expr Tests
     func parseExpr(source: String) throws -> Expr? {
         let l = Lexer(source: source)
-        let tokens = try l.tokens()
+        let tokens = try l.scan()
         let p = Parser(tokens: tokens)
         
         return try p.parseExpression()
@@ -29,13 +29,13 @@ final class parserTests: XCTestCase {
             return
         }
         
-        XCTAssertEqual(expr.token, .Minus(1))
+        XCTAssertEqual(expr.token, .Minus)
         guard let right = expr.right as? Name else {
             XCTFail()
             return
         }
         XCTAssertEqual(right.name, "x")
-        XCTAssertEqual(right.token, .Ident("x", 1))
+        XCTAssertEqual(right.token, .Ident("x"))
     }
 
     func testGrouping() throws {
@@ -58,7 +58,7 @@ final class parserTests: XCTestCase {
         let l = Lexer(source: source)
         
         do {
-            let tokens = try l.tokens()
+            let tokens = try l.scan()
             let p = Parser(tokens: tokens)
             _ = try p.parseExpression()
             XCTFail()
@@ -80,7 +80,7 @@ final class parserTests: XCTestCase {
             return
         }
         
-        XCTAssertEqual(expr.token, .Plus(1))
+        XCTAssertEqual(expr.token, .Plus)
         
         let left = expr.left as! Name
         let right = expr.right as! Name
@@ -126,5 +126,32 @@ final class parserTests: XCTestCase {
         XCTAssertEqual(expr.name, "x")
         let right = expr.right as! Literal<String>
         XCTAssertEqual(right.val, "string")
+    }
+    
+    func testExpressionStmt() throws {
+        let source = """
+        x + 2
+        2 + 3; "string" + "string"
+        """
+        
+        let program = try Parser(tokens: Lexer(source: source).scan()).parse()
+        
+        XCTAssertEqual(program.count, 3)
+    }
+    
+    func testExpressionStmtError() {
+        let source = """
+        x + 2
+        2 + 3 "string" + "string"
+        """
+        
+        do {
+            let program = try Parser(tokens: Lexer(source: source).scan()).parse()
+            XCTFail("did not throw an error")
+        } catch let error as ParseError {
+            XCTAssertEqual(error.message, "expected a ';' at line 2")
+        } catch {
+            XCTFail("wrong error")
+        }
     }
 }
